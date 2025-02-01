@@ -1,0 +1,113 @@
+package Default;
+
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.CellType;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.util.NumberToTextConverter;
+import org.apache.poi.xssf.usermodel.XSSFSheet;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.openqa.selenium.By;
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.WebElement;
+import org.openqa.selenium.chrome.ChromeDriver;
+
+import com.aventstack.extentreports.ExtentReports;
+import com.aventstack.extentreports.reporter.ExtentSparkReporter;
+
+public class LDTTech {
+	ExtentReports extent;
+	public static void main(String[] args) throws IOException {
+		WebDriver driver= new ChromeDriver();
+		driver.get("https://erail.in/");
+		driver.findElement(By.id("txtStationFrom")).clear();
+		driver.findElement(By.id("txtStationFrom")).sendKeys("DEL");
+	List<WebElement> ss=driver.findElements(By.xpath("//div[@class='autocomplete']/div"));
+	String ss1=ss.get(4).getText();
+	System.out.println(ss1);
+	for(int i=0;i<ss.size();i++) 
+	{
+		System.out.println(ss.get(i).getText());
+	}
+	
+	// to run the extent report	
+	LDTTech ld= new LDTTech();
+	ld.config();
+	ld.getData("Delhi Azadpur");
+	}
+	public void config() {
+		String path = System.getProperty("user.dir") + "\\reports\\index.html";
+		ExtentSparkReporter reporter = new ExtentSparkReporter(path);
+		reporter.config().setReportName("WebAutomationResults");
+		reporter.config().setDocumentTitle("Test Results");
+
+		extent = new ExtentReports();
+		extent.attachReporter(reporter);
+		extent.setSystemInfo("Tester", "Gaurav Singh");
+
+	}
+	public ArrayList<String> getData(String stationName) throws IOException 
+	{
+		// identify the test cases column by scanning the entire 1st row
+				// When we column is identified scan the entire column to identify the purchase
+				// test case row
+				// Once the row is identified then we have to fetch the data from the row
+				ArrayList<String> a= new ArrayList<String>();
+				FileInputStream fis = new FileInputStream("C:\\Users\\Asus\\Documents\\station.xlsx");
+				XSSFWorkbook workbook = new XSSFWorkbook(fis);
+				int Sheets = workbook.getNumberOfSheets();
+				System.out.println(Sheets);
+
+				for (int i = 0; i < Sheets; i++) {
+					if (workbook.getSheetName(i).equalsIgnoreCase("Sheet1")) {
+
+						XSSFSheet sheet = workbook.getSheetAt(i);
+						Iterator<Row> row = sheet.iterator();// This will iterate through the entire row
+						Row firstRow = row.next(); // This is first row of the sheet
+						Iterator<Cell> cell = firstRow.cellIterator();
+						int k = 0;
+						int column = 0;
+						while (cell.hasNext()) {
+							Cell Value = cell.next();
+							if (Value.getStringCellValue().equalsIgnoreCase("Delhi Azadpur")) {
+								column = k;
+							}
+							k++;
+						}
+						System.out.println(column);
+						while (row.hasNext()) {
+							Row r = row.next();
+							if (r.getCell(column).getStringCellValue().equalsIgnoreCase(stationName)) {
+								Iterator<Cell> cv = r.cellIterator();
+								while (cv.hasNext()) 
+								{
+									Cell c=cv.next();
+									if(c.getCellType()==CellType.STRING) 
+									{
+										a.add(c.getStringCellValue());
+									}
+									else 
+									{
+										a.add(NumberToTextConverter.toText(c.getNumericCellValue()));
+										
+									}
+
+								}
+							}
+						}
+					}
+					
+				}
+				return a;
+
+	}
+
+	
+
+
+}
